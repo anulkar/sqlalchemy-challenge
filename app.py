@@ -34,14 +34,21 @@ app = Flask(__name__)
 # ============================================================================================================
 @app.route("/")
 def home():
-    """List all available api routes."""
+    # List all available api routes
     return (
-        f"Available API Routes:<br/>"
-        f"<a href='http://localhost:5000/api/v1.0/precipitation' target='_blank'>Precipitation API</a><br/>"
-        f"<a href='http://localhost:5000/api/v1.0/stations' target='_blank'>Stations API</a><br>"
-        f"<a href='http://localhost:5000/api/v1.0/tobs' target='_blank'>Temperature Observations API</a><br>"
-        f"TMIN, TAVG, TMAX based on Start Date only: http://localhost:5000/api/v1.0/<start_date><br>"
-        f"TMIN, TAVG, TMAX based on Start & End Date: http://localhost:5000/api/v1.0/<start_date>/<end_date>"
+        f"<h2>Available API Routes for the Hawaii Weather Dataset</h2>"
+        f"<ul>"
+        f"<li><a href='http://localhost:5000/api/v1.0/precipitation' target='_blank'>Precipitation API</a>"
+        f": Returns all available precipitation scores from the Hawaii weather dataset by date.</li><br>"
+        f"<li><a href='http://localhost:5000/api/v1.0/stations' target='_blank'>Stations API</a>"
+        f": Lists all the Hawaii weather stations and their attributes from the dataset.</li><br>"
+        f"<li><a href='http://localhost:5000/api/v1.0/tobs' target='_blank'>Temperature Observations API</a>"
+        f": Returns a list of all the recorded temperature observations in the Hawaii dataset from a year from the last data point.</li><br>"
+        f"<li>" + "http://localhost:5000/api/v1.0/{start_date} : Calculates and returns the minimum, average & maximum temperatures for all dates greater than and equal to the specified {start_date} in YYYY-MM-DD format"
+        f"</li><br>"
+        f"<li>" + "http://localhost:5000/api/v1.0/{start_date}/{end_date} : Calculates and returns the minimum, average & maximum temperatures for all dates gbetween the {start_date} & {end_date} inclusive, in YYYY-MM-DD format"
+        f"</li><br>"
+        f"</ul>"
     )
 
 # ============================================================================================================
@@ -91,7 +98,7 @@ def stations():
     return(jsonify(all_stations))
 
 # ============================================================================================================
-# Define the tobs API route to return dates and temperature observations from a year from the last data point.
+# Define the tobs API route to return temperature observations from a year from the last data point.
 # ============================================================================================================
 @app.route("/api/v1.0/tobs")
 def tobs():
@@ -154,7 +161,7 @@ def query_temps_startend_date(start, end):
     session = Session(engine)
     
     # Design query to get the minimum temperature, average temperature, and the max temperature for a given start and end date range.
-    # Calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start and end date.
+    # Calculate TMIN, TAVG, and TMAX for dates between the start and end date inclusive.
     temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
         filter(Measurement.date >= start).filter(Measurement.date <= end).all()
 
