@@ -36,12 +36,12 @@ app = Flask(__name__)
 def home():
     """List all available api routes."""
     return (
-        f"Available Routes:<br/>"
-        f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations<br>"
-        f"/api/v1.0/tobs<br>"
-        f"/api/v1.0/<start_date><br>"
-        f"/api/v1.0/<start_date>/<end_date>"
+        f"Available API Routes:<br/>"
+        f"<a href='http://localhost:5000/api/v1.0/precipitation' target='_blank'>Precipitation API</a><br/>"
+        f"<a href='http://localhost:5000/api/v1.0/stations' target='_blank'>Stations API</a><br>"
+        f"<a href='http://localhost:5000/api/v1.0/tobs' target='_blank'>Temperature Observations API</a><br>"
+        f"TMIN, TAVG, TMAX based on Start Date only: http://localhost:5000/api/v1.0/<start_date><br>"
+        f"TMIN, TAVG, TMAX based on Start & End Date: http://localhost:5000/api/v1.0/<start_date>/<end_date>"
     )
 
 # ============================================================================================================
@@ -116,25 +116,52 @@ def tobs():
     return(jsonify(temps))
 
 # ============================================================================================================
-# 
+# Define API route to return TMIN, TAVG, and TMAX for a given start date range
 # ============================================================================================================
 @app.route("/api/v1.0/<start>")
-def query_temps_start_date(start_date):
-
-    """ Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
-    When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date. """
+def query_temps_start_date(start):
+    """ 
+    Args:
+        start_date (string): A date string in the format %Y-%m-%d        
+    Returns:
+        TMIN, TAVG, and TMAX
+    """
+    # Create session (link) from Python to the DB
+    session = Session(engine)
     
-    return "TBD"
+    # Design query to get the minimum temperature, average temperature, and the max temperature for a given start date range.
+    # Calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date.
+    temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).filter(Measurement.date >= start).all()
+
+    session.close()
+
+    # Return a JSON list of the minimum temperature, the average temperature, and the max temperature 
+    return(jsonify(temps))
 
 # ============================================================================================================
-# 
+# Define API route to return TMIN, TAVG, and TMAX for a given start and end date range
 # ============================================================================================================
 @app.route("/api/v1.0/<start>/<end>")
-def query_temps_startend_date(start_date, end_date):
+def query_temps_startend_date(start, end):
+    """ 
+    Args:
+        start (string): A date string in the format %Y-%m-%d        
+        end (string): A date string in the format %Y-%m-%d
+    Returns:
+        TMIN, TAVG, and TMAX
+    """
+    # Create session (link) from Python to the DB
+    session = Session(engine)
+    
+    # Design query to get the minimum temperature, average temperature, and the max temperature for a given start and end date range.
+    # Calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start and end date.
+    temps = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start).filter(Measurement.date <= end).all()
 
-    """ Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
-    When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive. """
-    return "TBD"
+    session.close()
+
+    # Return a JSON list of the minimum temperature, the average temperature, and the max temperature 
+    return(jsonify(temps))
 
 if __name__ == "__main__":
     app.run(debug=True)
