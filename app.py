@@ -26,9 +26,6 @@ Base.prepare(engine, reflect=True)
 Measurement = Base.classes.measurement
 Station = Base.classes.station
 
-# Create session (link) from Python to the DB
-session = Session(engine)
-
 # Flask Setup: Create the app
 app = Flask(__name__)
 
@@ -47,23 +44,53 @@ def home():
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    return "Atul Nulkar: Atlanta, GA"
+    # Create session (link) from Python to the DB
+    session = Session(engine)
+
+    # Calculate the date of the last data point in the database
+    last_measurement_date = session.query(Measurement.date).order_by(Measurement.date.desc()).first()
+    # Calculate the date 1 year ago from the last data point in the database
+    date_year_ago = dt.datetime.strptime(last_measurement_date[0],'%Y-%m-%d').date() - dt.timedelta(weeks=52)
+
+    # Perform a query to retrieve the date and precipitation scores for the last 12 months
+    prcp_scores = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= date_year_ago).filter(Measurement.date <= last_measurement_date[0]).all()
+
+    session.close()
+
+    # Convert the query results to a Dictionary using date as the key and prcp as the value
+    prcp_dict = dict(prcp_scores)
+
+    # Returns the JSON representation of the Dictionary
+    return(jsonify(prcp_dict))
 
 @app.route("/api/v1.0/stations")
 def stations():
-    return "Email me at nulkar@gmail.com"
+
+    # Return a JSON list of stations from the dataset
+
+    return "TBD"
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    return "Email me at nulkar@gmail.com"
+
+    """ Query for the dates and temperature observations from a year from the last data point.
+    Return a JSON list of Temperature Observations (tobs) for the previous year. """
+    return "TBD"
 
 @app.route("/api/v1.0/<start>")
 def query_temps_start_date():
-    return "Email me at nulkar@gmail.com"
+
+    """ Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
+    When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date. """
+    
+    return "TBD"
 
 @app.route("/api/v1.0/<start>/<end>")
 def query_temps_startend_date():
-    return "Email me at nulkar@gmail.com"
+
+    """ Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
+    When given the start and the end date, calculate the TMIN, TAVG, and TMAX for dates between the start and end date inclusive. """
+    return "TBD"
 
 if __name__ == "__main__":
     app.run(debug=True)
