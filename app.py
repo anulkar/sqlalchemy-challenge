@@ -38,15 +38,12 @@ def home():
     return (
         f"<h2>Available API Routes for the Hawaii Weather Dataset</h2>"
         f"<ul>"
-        f"<li><a href='http://localhost:5000/api/v1.0/precipitation' target='_blank'>Precipitation API</a>"
-        f": Returns all available precipitation scores from the Hawaii weather dataset by date.</li><br>"
-        f"<li><a href='http://localhost:5000/api/v1.0/stations' target='_blank'>Stations API</a>"
-        f": Lists all the Hawaii weather stations and their attributes from the dataset.</li><br>"
-        f"<li><a href='http://localhost:5000/api/v1.0/tobs' target='_blank'>Temperature Observations API</a>"
-        f": Returns a list of all the recorded temperature observations in the Hawaii dataset from a year from the last data point.</li><br>"
-        f"<li>" + "http://localhost:5000/api/v1.0/{start_date} : Calculates and returns the minimum, average & maximum temperatures for all dates greater than and equal to the specified {start_date} in YYYY-MM-DD format"
+        f"<li><b>/api/v1.0/precipitation</b> : Returns all available precipitation scores from the Hawaii weather dataset by date.</li><br>"
+        f"<li><b>/api/v1.0/stations</b> : Lists all the Hawaii weather stations and their attributes from the dataset.</li><br>"
+        f"<li><b>/api/v1.0/tobs</b> : Returns a list of all the recorded temperature observations in the Hawaii dataset from a year from the last data point.</li><br>"
+        f"<li>" + "<b>/api/v1.0/{start_date}</b>" + " : Calculates and returns the minimum, average & maximum temperatures for all dates greater than and equal to the specified <b>{start_date}</b> in YYYY-MM-DD format"
         f"</li><br>"
-        f"<li>" + "http://localhost:5000/api/v1.0/{start_date}/{end_date} : Calculates and returns the minimum, average & maximum temperatures for all dates gbetween the {start_date} & {end_date} inclusive, in YYYY-MM-DD format"
+        f"<li>" + "<b>/api/v1.0/{start_date}/{end_date}</b>" + " : Calculates and returns the minimum, average & maximum temperatures for all dates between the <b>{start_date} & {end_date}</b> inclusive, in YYYY-MM-DD format"
         f"</li><br>"
         f"</ul>"
     )
@@ -112,15 +109,18 @@ def tobs():
     date_year_ago = dt.datetime.strptime(last_measurement_date[0],'%Y-%m-%d').date() - dt.timedelta(weeks=52)
 
     # Query for the dates and temperature observations from a year from the last data point
-    temp_obs = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= date_year_ago).filter(Measurement.date <= last_measurement_date[0]).all()
+    temp_obs = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date >= date_year_ago).filter(Measurement.date <= last_measurement_date[0]).order_by(Measurement.date).all()
 
     session.close()
 
-    # Unpack tuple using list comprehensions
-    temps = [temp[1] for temp in temp_obs]
+    # Create a dictionary from the results set and append to a list that stores a dictionary of dates and temperature observations
+    temp_list = []
+    for temp in temp_obs:
+        temp_dict = {temp.date: temp.tobs}
+        temp_list.append(temp_dict)
 
     # Return a JSON list of Temperature Observations (tobs) for the previous year
-    return(jsonify(temps))
+    return(jsonify(temp_list))
 
 # ============================================================================================================
 # Define API route to return TMIN, TAVG, and TMAX for a given start date range
@@ -142,8 +142,16 @@ def query_temps_start_date(start):
 
     session.close()
 
+    # Create a dictionary from the results set and append to a list that stores a dictionary of the calculated temperatures
+    temp_list = []
+    temp_dict = {}
+    temp_dict["tmin"] = temps[0][0]
+    temp_dict["tavg"] = temps[0][1]
+    temp_dict["tmax"] = temps[0][2]
+    temp_list.append(temp_dict)
+
     # Return a JSON list of the minimum temperature, the average temperature, and the max temperature 
-    return(jsonify(temps))
+    return(jsonify(temp_list))
 
 # ============================================================================================================
 # Define API route to return TMIN, TAVG, and TMAX for a given start and end date range
@@ -167,8 +175,16 @@ def query_temps_startend_date(start, end):
 
     session.close()
 
+    # Create a dictionary from the results set and append to a list that stores a dictionary of the calculated temperatures
+    temp_list = []
+    temp_dict = {}
+    temp_dict["tmin"] = temps[0][0]
+    temp_dict["tavg"] = temps[0][1]
+    temp_dict["tmax"] = temps[0][2]
+    temp_list.append(temp_dict)
+
     # Return a JSON list of the minimum temperature, the average temperature, and the max temperature 
-    return(jsonify(temps))
+    return(jsonify(temp_dict))
 
 if __name__ == "__main__":
     app.run(debug=True)
